@@ -1,7 +1,7 @@
 # Test functions used to test the processing without direct sensor input.
 # Reads in test data from a CSV file
 
-TEST_FILE = "test.data"
+TEST_FILE = "2019-21-1--13-50-40.data"
 
 count = 0
 max_line = 0
