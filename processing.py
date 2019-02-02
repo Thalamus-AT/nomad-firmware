@@ -5,9 +5,9 @@ import sensor_driver as sd
 import vibrating_pad_driver as vpd
 
 MAX_SENSOR_DISTANCE = 300
-DBS_MAX_DISTANCE = 100
-DBS_MIN_SAMPLES = 1
-NON_OUTLIER_COUNT = 20
+DBS_MAX_DISTANCE = 200
+DBS_MIN_SAMPLES = 2
+NON_OUTLIER_COUNT = 50
 NUM_OF_POLLS = 99
 
 valid_data_points = []
@@ -55,7 +55,7 @@ def is_outlier(inputs):
         return False
 
     # Predict the label of the new data point
-    label = model.fit_predict(valid_data_points + [inputs])[poll_count - 1]
+    label = model.fit_predict(valid_data_points + [inputs])[len(valid_data_points)]
 
     # If the label does not indicate an outlier or if it is one of the initial few points it is added to the data
     if label != -1 or poll_count <= NON_OUTLIER_COUNT:
@@ -68,6 +68,22 @@ def is_outlier(inputs):
     model.fit(valid_data_points)
 
     return label == -1 and poll_count > NON_OUTLIER_COUNT
+
+
+# def is_outlier(inputs):
+#     global valid_data_points, poll_count, model
+#
+#     if model is None:
+#         model = DBSCAN(DBS_MAX_DISTANCE, DBS_MIN_SAMPLES)
+#         valid_data_points = [inputs]
+#         model.fit(valid_data_points)
+#         return False
+#
+#     valid_data_points = valid_data_points + [inputs]
+#     label = model.fit_predict(valid_data_points)[len(valid_data_points) - 1]
+#     print "Poll {} given class {}".format(poll_count, label)
+#
+#     return label == -1
 
 
 # Will classify the points using k-means to determine the type of obstacle
