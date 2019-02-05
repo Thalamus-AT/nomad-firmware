@@ -1,7 +1,9 @@
-from sklearn.cluster import DBSCAN
+# from sklearn.cluster import DBSCAN
+import time
 
 import device_io as io
-import sensor_driver as sd
+# import sensor_driver as sd
+import hcsr04 as sd
 import vibrating_pad_driver as vpd
 
 MAX_SENSOR_DISTANCE = 300
@@ -9,6 +11,8 @@ DBS_MAX_DISTANCE = 200
 DBS_MIN_SAMPLES = 2
 NON_OUTLIER_COUNT = 50
 NUM_OF_POLLS = 99
+
+POLL_TIME = 0.5
 
 valid_data_points = []
 poll_count = 0
@@ -23,16 +27,22 @@ def main():
 
     count = 0
     while not io.has_requested_exit():
+        last_time = time.time()
         inputs = sd.poll_sensors()
         poll_count += 1
+        print inputs
+        while time.time() < last_time + POLL_TIME:
+            time.sleep(0.01)
 
-        if not is_outlier(inputs):
-            class_num = classify_inputs(inputs)
-            output_by_class(class_num, 100)
+        # if not is_outlier(inputs):
+        #     class_num = classify_inputs(inputs)
+        #     output_by_class(class_num, 100)
+        #
+        # count += 1
+        # if count > NUM_OF_POLLS - 1:
+        #     io.request_exit()
 
-        count += 1
-        if count > NUM_OF_POLLS - 1:
-            io.request_exit()
+    sd.close()
 
     print
     print "Results:"
