@@ -24,6 +24,7 @@ model = None
 def main():
     global poll_count
     sd.setup_sensors()
+    vpd.setup()
 
     count = 0
     while not io.has_requested_exit():

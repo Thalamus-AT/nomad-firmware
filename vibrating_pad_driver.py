@@ -1,18 +1,48 @@
 import array
+import time
+
+import RPi.GPIO as GPIO
 
 intensities = array.array('I', [0, 0, 0])
+running = True
+
+LED_PINS = [16]
+leds = [None, None, None]
+
+
+def setup():
+    global leds
+
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+
+    for i in range(len(LED_PINS)):
+        GPIO.setup(LED_PINS[i], GPIO.OUT)
+
+    time.sleep(3)
+
+    for i in range(len(LED_PINS)):
+        leds[i] = GPIO.PWM(LED_PINS[i], 50)
+        leds[i].start(100)
 
 
 def set_pad_intensity(pad, intensity):
-    intensities[pad] = intensity
+    global leds
+
+    intensities[pad] = int(intensity)
+
+    if leds[pad] is not None:
+        leds[pad].ChangeDutyCycle(int(intensities[pad]))
 
 
 def set_all_intensities(values):
-    intensities[0] = int(values[0])
-    intensities[1] = int(values[1])
-    intensities[2] = int(values[2])
+    for i in range(len(leds)):
+        set_pad_intensity(i, values[i])
 
 
 def get_pad_intensity(pad):
     return intensities[pad]
 
+
+def close():
+    GPIO.cleanup()

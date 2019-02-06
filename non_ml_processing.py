@@ -38,6 +38,7 @@ right_weights = [0.0, 1.0]
 def main():
     global poll_count
     sd.setup_sensors()
+    vpd.setup()
 
     while not io.has_requested_exit():
         last_time = time.time()
@@ -59,6 +60,7 @@ def main():
         #     io.request_exit()
 
     sd.close()
+    vpd.close()
 
 
 def is_outlier(inputs):
@@ -74,7 +76,6 @@ def calc_output(inputs):
 
     change = calc_change_magnitude(inputs)
     normalised_change = (-1 / (1 + 10000 * (pow(100000, change - 1)))) + 1
-    # normalised_change = 1.0
     # print("Change: {}".format(change))
     # print("Normalised Change: {}".format(normalised_change))
 
