@@ -1,23 +1,28 @@
-# Test for HC-SR04 ultrasonic distance sensor
-# Make sure to run as sudo!
-
+import os
 import time
 
-import RPi.GPIO as GPIO
+# Check the system we are running on, if it is 64 bit we can presume it isn't the Pi
+if os.uname()[4] == 'x86_64':
+    import GPIO_Sim as GPIO
+else:
+    import RPi.GPIO as GPIO
 
-TRIG = [23, 19] # output pin
-ECHO = [24, 20] # input pin
+TRIG = [23, 19]  # Output pins
+ECHO = [24, 20]  # Input pins
 
 
 def setup_sensors():
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
 
-    GPIO.setup(TRIG, GPIO.OUT)
-    GPIO.setup(ECHO, GPIO.IN)
+    for t in TRIG:
+        GPIO.setup(t, GPIO.OUT)
+    for e in ECHO:
+        GPIO.setup(e, GPIO.IN)
 
-    GPIO.output(TRIG, False) # set output pin low
-    time.sleep(3) # allow time for sensor to settle
+    # Set output pin low then allow time to settle
+    GPIO.output(TRIG, False)
+    time.sleep(3)
 
 
 def poll_sensors():
@@ -35,17 +40,19 @@ def poll_sensor(num):
     GPIO.output(TRIG[num], False)
 
     # Calculate time between on and off signals
+    start_time = time.time()
     while GPIO.input(ECHO[num]) == 0:
         start_time = time.time()
+
+    end_time = time.time()
     while GPIO.input(ECHO[num]) == 1:
         end_time = time.time()
 
     pulse_time = end_time - start_time
 
-    # Calculate distance using S = D / T. Assume speed of sound is 343m/s (at sea level)
-    distance = (pulse_time * 343) / 2 # halve for distance to object
-    # print "Distance:", distance, "m"
-
+    # Calculate distance using S = D / T. Assume speed of sound is 343m/s (at sea level). Then half for just the
+    # to the object.
+    distance = (pulse_time * 343) / 2
     return distance * 100
 
 

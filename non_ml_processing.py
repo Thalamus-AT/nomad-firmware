@@ -5,88 +5,88 @@ import device_io as io
 import hcsr04 as sd
 import vibrating_pad_driver as vpd
 
-NUM_OF_POLLS = 100
-AVG_WINDOW_SIZE = 10
+AVG_WINDOW_SIZE = 10    # Number of previous polls to be averaged when calculating change rate.
+MAX_SENSOR_VAL = 200    # Maximum value that the sensor should produce.
+NUM_OF_SENSORS = 2      # Number of Sensors attached to the Nomad device.
+POLL_TIME = 0.2         # Time between each poll being made by the sensor, in seconds.
 
 poll_count = 0
+prev_values = [None] * AVG_WINDOW_SIZE  # Array of the most recent polls made. For usage in calculating change rate.
+last_index = 0  # The index of the oldest poll in the prev_values array
 
-MAX_SENSOR_VAL = 200
-NUM_OF_SENSORS = 2
-POLL_TIME = 0.2
+# === Weights for a 6 sensor version ===
+# left_weights = [1.0, 0.5, 0,
+#                 1.0, 0.5, 0,
+#                 1.0, 0.5, 0]
+# centre_weights = [0.5, 1.0, 0.5,
+#                   0.5, 1.0, 0.5,
+#                   0.5, 1.0, 0.5]
+# right_weights = [0, 0.5, 1.0,
+#                  0, 0.5, 1.0,
+#                  0, 0.5, 1.0]
 
-# left_weights = [1.5, 1.0, 0.0,
-#                2.5, 1.5, 0.0,
-#                1.5, 1.0, 0.0]
-#
-# centre_weights = [0.50, 1.25, 0.50,
-#                  1.25, 2.00, 1.25,
-#                  0.50, 1.25, 0.50]
-#
-# right_weights = [0.0, 1.0, 1.5,
-#                 0.0, 1.5, 2.5,
-#                 0.0, 1.0, 1.5]
-
+# === Weights for a 2 sensor version ===
 left_weights = [1.0, 0.0]
-
 centre_weights = [1.0, 1.0]
-
 right_weights = [0.0, 1.0]
 
 
 # Represents the core loop of the program, getting sensor data, removing outliers, classifying the results,
-# then setting the intensity of the sensors appropriately
+# then setting the intensity of the sensors appropriately.
 def main():
     global poll_count
+
+    io.setup()
     sd.setup_sensors()
     vpd.setup()
 
+    # Loops until the user exits.
     while not io.has_requested_exit():
+        # Store the current time so we know when to poll next.
         last_time = time.time()
+
+        # Get the inputs and normalise them.
         inputs = sd.poll_sensors()
+        poll_count += 1
         for i in range(len(inputs)):
             inputs[i] = min(inputs[i], MAX_SENSOR_VAL)
 
-        poll_count += 1
-
-        # print inputs
-        while time.time() < last_time + POLL_TIME:
-            time.sleep(0.01)
-
+        # Check if the inputs are an outlier, if they aren't then set the outputs appropriately.
         if not is_outlier(inputs):
             intensities = calc_output(inputs)
             vpd.set_all_intensities(intensities)
 
-        # if poll_count > NUM_OF_POLLS - 1:
-        #     io.request_exit()
+        # Wait until the next step is reached.
+        while time.time() < last_time + POLL_TIME:
+            time.sleep(0.01)
 
-    sd.close()
     vpd.close()
+    sd.close()
+    io.close()
 
 
 def is_outlier(inputs):
     return False
 
 
-prev_values = [None] * AVG_WINDOW_SIZE
-last_index = 0
-
-
+# Calculates the intensity values to be output to the vibrating pads.
 def calc_output(inputs):
     global prev_values, last_index
 
+    # Get the rate-of-change value and normalise it.
     change = calc_change_magnitude(inputs)
     normalised_change = (-1 / (1 + 10000 * (pow(100000, change - 1)))) + 1
-    # print("Change: {}".format(change))
-    # print("Normalised Change: {}".format(normalised_change))
 
+    # Update the prev_values array.
     prev_values[last_index] = inputs
     last_index = (last_index + 1) % AVG_WINDOW_SIZE
 
+    # Calculate the weighted average distance for each output.
     left_avg = get_weighted_average(inputs, left_weights)
     centre_avg = get_weighted_average(inputs, centre_weights)
     right_avg = get_weighted_average(inputs, right_weights)
-    # print("Averages: {}\t{}\t{}".format(left_avg, centre_avg, right_avg))
 
+    # Convert the average distances into the intensity value.
     left_intensity = normalised_change * ((MAX_SENSOR_VAL - left_avg) / (MAX_SENSOR_VAL / 100))
     centre_intensity = normalised_change * ((MAX_SENSOR_VAL - centre_avg) / (MAX_SENSOR_VAL / 100))
     right_intensity = normalised_change * ((MAX_SENSOR_VAL - right_avg) / (MAX_SENSOR_VAL / 100))
@@ -95,7 +95,10 @@ def calc_output(inputs):
     return left_intensity, centre_intensity, right_intensity
 
 
+# Calculates the magnitude of change between the last few values and the current values.
+# Larger values should represent sudden, large movements.
 def calc_change_magnitude(values):
+    # Calculate the total distance, across the last few polls, at each sensor.
     totals = [0] * NUM_OF_SENSORS
     for i in range(len(prev_values)):
         if prev_values[i] is None:
@@ -104,13 +107,16 @@ def calc_change_magnitude(values):
         for j in range(len(totals)):
             totals[j] += prev_values[i][j]
 
+    # Calculate the difference at each sensor between the average value and the new value.
     total_diff = 0
     for i in range(len(totals)):
         total_diff += abs((totals[i] / AVG_WINDOW_SIZE) - values[i])
 
+    # Return this difference value, normalised between 0 to 1.
     return total_diff / MAX_SENSOR_VAL
 
 
+# Use the weight arrays to calculate a weighted average distance for a particular output.
 def get_weighted_average(values, weights):
     total = 0
     for i in range(len(values)):
@@ -119,5 +125,6 @@ def get_weighted_average(values, weights):
     return total / sum(weights)
 
 
+# If this script is being run directly then call the main function
 if __name__ == '__main__':
     main()

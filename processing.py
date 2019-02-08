@@ -1,3 +1,11 @@
+
+# =====================================================
+#
+#   This script is currently unused and out of date.
+#   For the current version see 'non_ml_processing.py'
+#
+# =====================================================
+
 # from sklearn.cluster import DBSCAN
 import time
 

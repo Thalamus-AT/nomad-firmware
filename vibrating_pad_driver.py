@@ -1,7 +1,12 @@
 import array
+import os
 import time
 
-import RPi.GPIO as GPIO
+# Check the system we are running on, if it is 64 bit we can presume it isn't the Pi
+if os.uname()[4] == 'x86_64':
+    import GPIO_Sim as GPIO
+else:
+    import RPi.GPIO as GPIO
 
 intensities = array.array('I', [0, 0, 0])
 running = True
