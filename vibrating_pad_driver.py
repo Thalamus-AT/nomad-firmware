@@ -11,7 +11,7 @@ else:
 intensities = array.array('I', [0, 0, 0])
 running = True
 
-LED_PINS = [16]
+LED_PINS = [12, 13, 16]
 leds = [None, None, None]
 
 
@@ -42,7 +42,8 @@ def set_pad_intensity(pad, intensity):
 
 def set_all_intensities(values):
     for i in range(len(leds)):
-        set_pad_intensity(i, values[i])
+        val = max(min(values[i], 100), 0)
+        set_pad_intensity(i, val)
 
 
 def get_pad_intensity(pad):

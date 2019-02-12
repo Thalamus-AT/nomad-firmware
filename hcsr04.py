@@ -7,8 +7,8 @@ if os.uname()[4] == 'x86_64':
 else:
     import RPi.GPIO as GPIO
 
-TRIG = [23, 19]  # Output pins
-ECHO = [24, 20]  # Input pins
+TRIG = [17, 18]  # Output pins
+ECHO = [24, 21]  # Input pins
 
 
 def setup_sensors():

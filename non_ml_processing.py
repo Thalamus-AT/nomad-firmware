@@ -1,3 +1,4 @@
+import sys
 import time
 
 import device_io as io
@@ -9,10 +10,14 @@ AVG_WINDOW_SIZE = 10    # Number of previous polls to be averaged when calculati
 MAX_SENSOR_VAL = 200    # Maximum value that the sensor should produce.
 NUM_OF_SENSORS = 2      # Number of Sensors attached to the Nomad device.
 POLL_TIME = 0.2         # Time between each poll being made by the sensor, in seconds.
+OUTLIER_BUFFER = 500 * POLL_TIME    # Buffer zone around the previous value that is considered non-outlier
 
+output_mode = 0     # 0 = Standard  1 = Silent  2 = Fancy
 poll_count = 0
 prev_values = [None] * AVG_WINDOW_SIZE  # Array of the most recent polls made. For usage in calculating change rate.
-last_index = 0  # The index of the oldest poll in the prev_values array
+last_index = -1     # Index of the last poll added
+curr_index = 0      # The index of the oldest poll in the prev_values array
+last_outlier = None
 
 # === Weights for a 6 sensor version ===
 # left_weights = [1.0, 0.5, 0,
@@ -34,7 +39,14 @@ right_weights = [0.0, 1.0]
 # Represents the core loop of the program, getting sensor data, removing outliers, classifying the results,
 # then setting the intensity of the sensors appropriately.
 def main():
-    global poll_count
+    global poll_count, output_mode
+
+    # Check if the fancy output parameter has been set.
+    if len(sys.argv) > 1 and sys.argv[1] == '-o' and len(sys.argv) > 2:
+        if sys.argv[2] == 'none':
+            output_mode = 1
+        elif sys.argv[2] == 'fancy':
+            output_mode = 2
 
     io.setup()
     sd.setup_sensors()
@@ -50,11 +62,14 @@ def main():
         poll_count += 1
         for i in range(len(inputs)):
             inputs[i] = min(inputs[i], MAX_SENSOR_VAL)
+        # print inputs
 
         # Check if the inputs are an outlier, if they aren't then set the outputs appropriately.
         if not is_outlier(inputs):
             intensities = calc_output(inputs)
             vpd.set_all_intensities(intensities)
+        else:
+            print("Outlier: {}".format(inputs))
 
         # Wait until the next step is reached.
         while time.time() < last_time + POLL_TIME:
@@ -66,20 +81,42 @@ def main():
 
 
 def is_outlier(inputs):
+    global last_outlier
+
+    if last_index == -1:
+        return False
+
+    for i in range(len(inputs)):
+        prev = prev_values[last_index][i]
+
+        if prev == MAX_SENSOR_VAL or inputs[i] == MAX_SENSOR_VAL:
+            continue
+
+        if abs(inputs[i] - prev) > OUTLIER_BUFFER:
+            if last_outlier is not None:
+                if sum([abs(a - b) for a, b in zip(inputs, last_outlier)]) / NUM_OF_SENSORS <= OUTLIER_BUFFER:
+                    prev_values[last_index] = last_outlier
+                    last_outlier = None
+                    return False
+
+            last_outlier = inputs
+            return True
+
     return False
 
 
 # Calculates the intensity values to be output to the vibrating pads.
 def calc_output(inputs):
-    global prev_values, last_index
+    global prev_values, last_index, curr_index
 
     # Get the rate-of-change value and normalise it.
     change = calc_change_magnitude(inputs)
     normalised_change = (-1 / (1 + 10000 * (pow(100000, change - 1)))) + 1
 
     # Update the prev_values array.
-    prev_values[last_index] = inputs
-    last_index = (last_index + 1) % AVG_WINDOW_SIZE
+    prev_values[curr_index] = inputs
+    last_index = curr_index
+    curr_index = (curr_index + 1) % AVG_WINDOW_SIZE
 
     # Calculate the weighted average distance for each output.
     left_avg = get_weighted_average(inputs, left_weights)
@@ -91,7 +128,13 @@ def calc_output(inputs):
     centre_intensity = normalised_change * ((MAX_SENSOR_VAL - centre_avg) / (MAX_SENSOR_VAL / 100))
     right_intensity = normalised_change * ((MAX_SENSOR_VAL - right_avg) / (MAX_SENSOR_VAL / 100))
 
-    print("Intensities: {}\t{}\t{}".format(left_intensity, centre_intensity, right_intensity))
+    # Print the relevant output.
+    if output_mode == 2:
+        sys.stdout.write("\rIntensities: {} \t{} \t{}".format(left_intensity, centre_intensity, right_intensity))
+        sys.stdout.flush()
+    elif output_mode == 0:
+        print("Intensities: {} \t{} \t{}".format(left_intensity, centre_intensity, right_intensity))
+
     return left_intensity, centre_intensity, right_intensity
 
 
