@@ -11,37 +11,37 @@ else:
 intensities = array.array('I', [0, 0, 0])
 running = True
 
-LED_PINS = [12, 13, 16]
-leds = [None, None, None]
+OUT_PINS = [12, 13, 16]
+pads = [None] * len(OUT_PINS)
 
 
 def setup():
-    global leds
+    global pads
 
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
 
-    for i in range(len(LED_PINS)):
-        GPIO.setup(LED_PINS[i], GPIO.OUT)
+    for i in range(len(OUT_PINS)):
+        GPIO.setup(OUT_PINS[i], GPIO.OUT)
 
     time.sleep(3)
 
-    for i in range(len(LED_PINS)):
-        leds[i] = GPIO.PWM(LED_PINS[i], 50)
-        leds[i].start(100)
+    for i in range(len(OUT_PINS)):
+        pads[i] = GPIO.PWM(OUT_PINS[i], 50)
+        pads[i].start(100)
 
 
 def set_pad_intensity(pad, intensity):
-    global leds
+    global pads
 
     intensities[pad] = int(intensity)
 
-    if leds[pad] is not None:
-        leds[pad].ChangeDutyCycle(int(intensities[pad]))
+    if pads[pad] is not None:
+        pads[pad].ChangeDutyCycle(int(intensities[pad]))
 
 
 def set_all_intensities(values):
-    for i in range(len(leds)):
+    for i in range(len(pads)):
         val = max(min(values[i], 100), 0)
         set_pad_intensity(i, val)
 

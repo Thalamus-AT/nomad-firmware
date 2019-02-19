@@ -2,8 +2,8 @@ import sys
 import time
 
 import device_io as io
-# import sensor_driver as sd
-import hcsr04 as sd
+# import sensor_sim as sd
+import sensor_driver as sd
 import vibrating_pad_driver as vpd
 
 AVG_WINDOW_SIZE = 10    # Number of previous polls to be averaged when calculating change rate.
@@ -62,7 +62,7 @@ def main():
         poll_count += 1
         for i in range(len(inputs)):
             inputs[i] = min(inputs[i], MAX_SENSOR_VAL)
-        # print inputs
+        print inputs
 
         # Check if the inputs are an outlier, if they aren't then set the outputs appropriately.
         if not is_outlier(inputs):
@@ -111,7 +111,7 @@ def calc_output(inputs):
 
     # Get the rate-of-change value and normalise it.
     change = calc_change_magnitude(inputs)
-    normalised_change = (-1 / (1 + 10000 * (pow(100000, change - 1)))) + 1
+    normalised_change = [(-1 / (1 + 10000 * (pow(100000, c - 1)))) + 1 for c in change]
 
     # Update the prev_values array.
     prev_values[curr_index] = inputs
@@ -123,10 +123,17 @@ def calc_output(inputs):
     centre_avg = get_weighted_average(inputs, centre_weights)
     right_avg = get_weighted_average(inputs, right_weights)
 
+    # Calculate the change rates for each sensor
+    left_change = get_weighted_average(normalised_change, left_weights)
+    centre_change = get_weighted_average(normalised_change, centre_weights)
+    right_change = get_weighted_average(normalised_change, right_weights)
+
+    # print("Change Rates: {} \t {}\t {}".format(left_change, centre_change, right_change))
+
     # Convert the average distances into the intensity value.
-    left_intensity = normalised_change * ((MAX_SENSOR_VAL - left_avg) / (MAX_SENSOR_VAL / 100))
-    centre_intensity = normalised_change * ((MAX_SENSOR_VAL - centre_avg) / (MAX_SENSOR_VAL / 100))
-    right_intensity = normalised_change * ((MAX_SENSOR_VAL - right_avg) / (MAX_SENSOR_VAL / 100))
+    left_intensity = left_change * ((MAX_SENSOR_VAL - left_avg) / (MAX_SENSOR_VAL / 100))
+    centre_intensity = centre_change * ((MAX_SENSOR_VAL - centre_avg) / (MAX_SENSOR_VAL / 100))
+    right_intensity = right_change * ((MAX_SENSOR_VAL - right_avg) / (MAX_SENSOR_VAL / 100))
 
     # Print the relevant output.
     if output_mode == 2:
@@ -150,13 +157,7 @@ def calc_change_magnitude(values):
         for j in range(len(totals)):
             totals[j] += prev_values[i][j]
 
-    # Calculate the difference at each sensor between the average value and the new value.
-    total_diff = 0
-    for i in range(len(totals)):
-        total_diff += abs((totals[i] / AVG_WINDOW_SIZE) - values[i])
-
-    # Return this difference value, normalised between 0 to 1.
-    return total_diff / MAX_SENSOR_VAL
+    return [abs((t / AVG_WINDOW_SIZE) - v) / MAX_SENSOR_VAL for t, v in zip(totals, values)]
 
 
 # Use the weight arrays to calculate a weighted average distance for a particular output.

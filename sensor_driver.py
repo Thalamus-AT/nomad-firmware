@@ -1,44 +1,60 @@
-# Test functions used to test the processing without direct sensor input.
-# Reads in test data from a CSV file
+import os
+import time
 
-TEST_FILE = "2019-21-1--13-50-40.data"
+# Check the system we are running on, if it is 64 bit we can presume it isn't the Pi
+if os.uname()[4] == 'x86_64':
+    import GPIO_Sim as GPIO
+else:
+    import RPi.GPIO as GPIO
 
-count = 0
-max_line = 0
-
-
-# Returns the length of a file
-def file_len(fname):
-    f = open(fname, 'r')
-
-    i = 0
-    for i, l in enumerate(f):
-        pass
-
-    f.close()
-
-    return i + 1
+TRIG = [17, 18]  # Output pins
+ECHO = [24, 21]  # Input pins
 
 
-# Initialises the test data
 def setup_sensors():
-    global count, max_line
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
 
-    count = 0
-    max_line = file_len(TEST_FILE)
-    print("Initialising Sensors")
-    print("File ({}) contains {} lines".format(TEST_FILE, max_line))
-    print
+    for t in TRIG:
+        GPIO.setup(t, GPIO.OUT)
+    for e in ECHO:
+        GPIO.setup(e, GPIO.IN)
+
+    # Set output pin low then allow time to settle
+    GPIO.output(TRIG, False)
+    time.sleep(3)
 
 
-# Reads the next line of data from the file and returns it as a 1x9 array of ints
-# If it has reached the end of the file it will loop around to the start again
 def poll_sensors():
-    global count
+    results = []
+    for i in range(len(TRIG)):
+        results.append(poll_sensor(i))
 
-    with open(TEST_FILE, 'r') as f:
-        for i, line in enumerate(f):
-            if i == count:
-                count = (count + 1) % max_line
-                return map(float, map(str.strip, line.split(',')))
+    return results
 
+
+def poll_sensor(num):
+    # Send a 10us pulse to trigger the sensor to send 8 x 40kHz bursts
+    GPIO.output(TRIG[num], True)
+    time.sleep(0.00001)
+    GPIO.output(TRIG[num], False)
+
+    # Calculate time between on and off signals
+    start_time = time.time()
+    while GPIO.input(ECHO[num]) == 0:
+        start_time = time.time()
+
+    end_time = time.time()
+    while GPIO.input(ECHO[num]) == 1:
+        end_time = time.time()
+
+    pulse_time = end_time - start_time
+
+    # Calculate distance using S = D / T. Assume speed of sound is 343m/s (at sea level). Then half for just the
+    # to the object.
+    distance = (pulse_time * 343) / 2
+    return distance * 100
+
+
+def close():
+    GPIO.cleanup()

@@ -11,7 +11,7 @@ import time
 
 import device_io as io
 # import sensor_driver as sd
-import hcsr04 as sd
+import sensor_driver as sd
 import vibrating_pad_driver as vpd
 
 MAX_SENSOR_DISTANCE = 300
