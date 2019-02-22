@@ -1,4 +1,4 @@
-from pynput import keyboard as kb
+# from pynput import keyboard as kb
 
 requested_exit = False
 listener = None
@@ -6,8 +6,8 @@ listener = None
 
 def setup():
     global listener
-    listener = kb.Listener(on_release=release_handler)
-    listener.start()
+    # listener = kb.Listener(on_release=release_handler)
+    # listener.start()
 
 
 # Called when the user wants to exit
@@ -23,11 +23,11 @@ def has_requested_exit():
 
 def release_handler(key):
     print('Key Pressed ({})'.format(key))
-    if key == kb.Key.esc:
-        request_exit()
+    # if key == kb.Key.esc:
+    #     request_exit()
 
 
 def close():
     global listener
-    if listener is not None:
-        listener.stop()
+    # if listener is not None:
+    #     listener.stop()

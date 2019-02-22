@@ -1,6 +1,5 @@
 import array
 import os
-import time
 
 # Check the system we are running on, if it is 64 bit we can presume it isn't the Pi
 if os.uname()[4] == 'x86_64':
@@ -11,24 +10,24 @@ else:
 intensities = array.array('I', [0, 0, 0])
 running = True
 
-OUT_PINS = [12, 13, 16]
-pads = [None] * len(OUT_PINS)
+ENABLE_PINS = []
+CLOCKWISE_PIN = []
+pads = [None] * len(ENABLE_PINS)
 
 
 def setup():
     global pads
 
-    GPIO.setwarnings(False)
-    GPIO.setmode(GPIO.BCM)
+    for i in range(len(ENABLE_PINS)):
+        GPIO.setup(ENABLE_PINS[i], GPIO.OUT)
+        GPIO.setup(CLOCKWISE_PIN[i], GPIO.OUT)
 
-    for i in range(len(OUT_PINS)):
-        GPIO.setup(OUT_PINS[i], GPIO.OUT)
+        GPIO.output(ENABLE_PINS[i], True)
 
-    time.sleep(3)
-
-    for i in range(len(OUT_PINS)):
-        pads[i] = GPIO.PWM(OUT_PINS[i], 50)
+        pads[i] = GPIO.PWM(CLOCKWISE_PIN[i], 50)
         pads[i].start(100)
+
+    set_all_intensities([100])
 
 
 def set_pad_intensity(pad, intensity):
@@ -51,4 +50,8 @@ def get_pad_intensity(pad):
 
 
 def close():
+    for i in range(len(ENABLE_PINS)):
+        GPIO.output(ENABLE_PINS[i], False)
+        GPIO.output(CLOCKWISE_PIN[i], False)
+
     GPIO.cleanup()

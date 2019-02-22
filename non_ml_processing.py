@@ -2,6 +2,7 @@ import sys
 import time
 
 import device_io as io
+import gui
 # import sensor_sim as sd
 import sensor_driver as sd
 import vibrating_pad_driver as vpd
@@ -20,20 +21,17 @@ curr_index = 0      # The index of the oldest poll in the prev_values array
 last_outlier = None
 
 # === Weights for a 6 sensor version ===
-# left_weights = [1.0, 0.5, 0,
-#                 1.0, 0.5, 0,
-#                 1.0, 0.5, 0]
-# centre_weights = [0.5, 1.0, 0.5,
-#                   0.5, 1.0, 0.5,
-#                   0.5, 1.0, 0.5]
-# right_weights = [0, 0.5, 1.0,
-#                  0, 0.5, 1.0,
-#                  0, 0.5, 1.0]
+left_weights = [1.0, 0.5, 0,
+                1.0, 0.5, 0]
+centre_weights = [0.5, 1.0, 0.5,
+                  0.5, 1.0, 0.5]
+right_weights = [0, 0.5, 1.0,
+                 0, 0.5, 1.0]
 
 # === Weights for a 2 sensor version ===
-left_weights = [1.0, 0.0]
-centre_weights = [1.0, 1.0]
-right_weights = [0.0, 1.0]
+# left_weights = [1.0, 0.0]
+# centre_weights = [1.0, 1.0]
+# right_weights = [0.0, 1.0]
 
 
 # Represents the core loop of the program, getting sensor data, removing outliers, classifying the results,
@@ -48,7 +46,8 @@ def main():
         elif sys.argv[2] == 'fancy':
             output_mode = 2
 
-    io.setup()
+    # io.setup()
+    gui.start_gui(io)
     sd.setup_sensors()
     vpd.setup()
 
@@ -62,12 +61,14 @@ def main():
         poll_count += 1
         for i in range(len(inputs)):
             inputs[i] = min(inputs[i], MAX_SENSOR_VAL)
-        print inputs
+        # print inputs
 
         # Check if the inputs are an outlier, if they aren't then set the outputs appropriately.
         if not is_outlier(inputs):
             intensities = calc_output(inputs)
             vpd.set_all_intensities(intensities)
+
+            gui.set_values(inputs, intensities)
         else:
             print("Outlier: {}".format(inputs))
 
@@ -75,9 +76,11 @@ def main():
         while time.time() < last_time + POLL_TIME:
             time.sleep(0.01)
 
+    print('Exit Request Made')
     vpd.close()
     sd.close()
-    io.close()
+    gui.close()
+    # io.close()
 
 
 def is_outlier(inputs):
@@ -119,14 +122,14 @@ def calc_output(inputs):
     curr_index = (curr_index + 1) % AVG_WINDOW_SIZE
 
     # Calculate the weighted average distance for each output.
-    left_avg = get_weighted_average(inputs, left_weights)
-    centre_avg = get_weighted_average(inputs, centre_weights)
-    right_avg = get_weighted_average(inputs, right_weights)
+    left_avg = get_weighted_average(inputs, left_weights, 2)
+    centre_avg = get_weighted_average(inputs, centre_weights, 2)
+    right_avg = get_weighted_average(inputs, right_weights, 2)
 
     # Calculate the change rates for each sensor
-    left_change = get_weighted_average(normalised_change, left_weights)
-    centre_change = get_weighted_average(normalised_change, centre_weights)
-    right_change = get_weighted_average(normalised_change, right_weights)
+    left_change = get_weighted_average(normalised_change, left_weights, 1)
+    centre_change = get_weighted_average(normalised_change, centre_weights, 1)
+    right_change = get_weighted_average(normalised_change, right_weights, 1)
 
     # print("Change Rates: {} \t {}\t {}".format(left_change, centre_change, right_change))
 
@@ -161,12 +164,17 @@ def calc_change_magnitude(values):
 
 
 # Use the weight arrays to calculate a weighted average distance for a particular output.
-def get_weighted_average(values, weights):
-    total = 0
+def get_weighted_average(values, weights, output):
+    avgs = []
     for i in range(len(values)):
-        total += values[i] * weights[i]
+        avgs.append(values[i] * weights[i])
 
-    return total / sum(weights)
+    if output == 1:
+        return max(avgs)
+    elif output == 2:
+        return min(avgs)
+    else:
+        return sum(avgs) / sum(weights)
 
 
 # If this script is being run directly then call the main function
