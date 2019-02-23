@@ -1,5 +1,6 @@
 import sys
 import time
+from threading import Thread
 
 import device_io as io
 import gui
@@ -28,26 +29,33 @@ centre_weights = [0.5, 1.0, 0.5,
 right_weights = [0, 0.5, 1.0,
                  0, 0.5, 1.0]
 
-# === Weights for a 2 sensor version ===
-# left_weights = [1.0, 0.0]
-# centre_weights = [1.0, 1.0]
-# right_weights = [0.0, 1.0]
-
 
 # Represents the core loop of the program, getting sensor data, removing outliers, classifying the results,
 # then setting the intensity of the sensors appropriately.
 def main():
-    global poll_count, output_mode
+    global output_mode, gui_class
 
-    # Check if the fancy output parameter has been set.
     if len(sys.argv) > 1 and sys.argv[1] == '-o' and len(sys.argv) > 2:
         if sys.argv[2] == 'none':
             output_mode = 1
         elif sys.argv[2] == 'fancy':
             output_mode = 2
+        elif sys.argv[2] == 'gui':
+            output_mode = 3
+            back_process = Thread(target=run_loop)
+            back_process.start()
 
-    # io.setup()
-    gui.start_gui(io)
+            gui_class = gui.gui(io)
+            gui_class.run_gui()
+            return
+
+    run_loop()
+
+
+def run_loop():
+    global poll_count
+
+    io.setup()
     sd.setup_sensors()
     vpd.setup()
 
@@ -68,7 +76,9 @@ def main():
             intensities = calc_output(inputs)
             vpd.set_all_intensities(intensities)
 
-            gui.set_values(inputs, intensities)
+            if output_mode == 3:
+                print('{} | {}'.format(inputs, intensities))
+                gui_class.set_values(inputs, intensities)
         else:
             print("Outlier: {}".format(inputs))
 
@@ -79,8 +89,7 @@ def main():
     print('Exit Request Made')
     vpd.close()
     sd.close()
-    gui.close()
-    # io.close()
+    io.close()
 
 
 def is_outlier(inputs):

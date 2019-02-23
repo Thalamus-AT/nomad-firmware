@@ -1,98 +1,81 @@
 import Tkinter as tk
 import tkFont
-from threading import Thread
-
-gui_process = None
-io = None
-window = None
-
-input_values = None
-output_values = None
 
 
-def run_gui():
-    global window, input_values, output_values
+class gui:
+    window = None
+    input_values = None
+    output_values = None
+    io_handler = None
 
-    window = tk.Tk()
-    default_font = tkFont.Font(family="Times", size=16)
-    window.option_add("*Font", default_font)
-    window.title("Nomad Sensor | Thalamus Assistive Technologies")
-    window.geometry("500x250")
-    window.resizable(0, 0)
-    window.protocol("WM_DELETE_WINDOW", window_close_handler)
+    def __init__(self, io):
+        self.io_handler = io
 
-    left_frame = tk.Frame(master=window, width=250, height=250)
-    right_frame = tk.Frame(master=window, width=250, height=250)
+    def run_gui(self):
 
-    left_frame.grid_propagate(0)
-    right_frame.grid_propagate(0)
+        self.window = tk.Tk()
+        default_font = tkFont.Font(family="Times", size=16)
+        self.window.option_add("*Font", default_font)
+        self.window.title("Nomad Sensor | Thalamus Assistive Technologies")
+        self.window.geometry("500x250")
+        self.window.resizable(0, 0)
+        self.window.protocol("WM_DELETE_WINDOW", self.window_close_handler)
 
-    input_label = tk.Label(master=left_frame, text='Sensor Readings:')
-    output_label = tk.Label(master=right_frame, text='Output Intensities')
+        left_frame = tk.Frame(master=self.window, width=250, height=250)
+        right_frame = tk.Frame(master=self.window, width=250, height=250)
 
-    input_label.place(anchor='center')
-    output_label.place(anchor='center')
+        left_frame.grid_propagate(0)
+        right_frame.grid_propagate(0)
 
-    input_label.grid(row=0)
-    output_label.grid(row=0)
+        input_label = tk.Label(master=left_frame, text='Sensor Readings:')
+        output_label = tk.Label(master=right_frame, text='Output Intensities')
 
-    input_frame = tk.Frame(master=left_frame, width=250, height=200)
-    output_frame = tk.Frame(master=right_frame, width=250, height=200)
+        input_label.place(anchor='center')
+        output_label.place(anchor='center')
 
-    input_frame.place(anchor='center')
-    output_frame.place(anchor='center')
+        input_label.grid(row=0)
+        output_label.grid(row=0)
 
-    input_frame.grid_propagate(0)
-    output_frame.grid_propagate(0)
+        input_frame = tk.Frame(master=left_frame, width=250, height=200)
+        output_frame = tk.Frame(master=right_frame, width=250, height=200)
 
-    input_values = [None] * 6
-    for i in range(len(input_values)):
-        input_values[i] = tk.StringVar()
-        tk.Label(master=input_frame, textvariable=input_values[i]).grid(row=int(i / 3), column=i % 3)
-        input_values[i].set('000.000')
+        input_frame.place(anchor='center')
+        output_frame.place(anchor='center')
 
-    output_values = [None] * 3
-    for i in range(len(output_values)):
-        output_values[i] = tk.StringVar()
-        tk.Label(master=output_frame, textvariable=output_values[i]).grid(row=0, column=i)
-        output_values[i].set('000.000')
+        input_frame.grid_propagate(0)
+        output_frame.grid_propagate(0)
 
-    input_frame.grid(row=1)
-    output_frame.grid(row=1)
+        self.input_values = [None] * 6
+        for i in range(len(self.input_values)):
+            self.input_values[i] = tk.StringVar()
+            tk.Label(master=input_frame, textvariable=self.input_values[i]).grid(row=int(i / 3), column=i % 3)
+            self.input_values[i].set('000.000')
 
-    left_frame.grid(row=0, column=0)
-    right_frame.grid(row=0, column=1)
+        self. output_values = [None] * 3
+        for i in range(len(self.output_values)):
+            self.output_values[i] = tk.StringVar()
+            tk.Label(master=output_frame, textvariable=self.output_values[i]).grid(row=0, column=i)
+            self.output_values[i].set('000.000')
 
-    window.mainloop()
+        input_frame.grid(row=1)
+        output_frame.grid(row=1)
 
+        left_frame.grid(row=0, column=0)
+        right_frame.grid(row=0, column=1)
 
-def window_close_handler():
-    io.request_exit()
-    window.destroy()
+        self.window.mainloop()
 
+    def window_close_handler(self):
+        self.io_handler.request_exit()
+        self.window.quit()
 
-def start_gui(io_handler):
-    global gui_process, io
+    def set_values(self, inputs, outputs):
+        print('{} | {}'.format(self.input_values, self.output_values))
+        assert self.input_values is not None
+        assert self.output_values is not None
 
-    io = io_handler
+        for i in range(len(self.input_values)):
+            self.input_values[i].set(str(inputs[i])[:7])
 
-    gui_process = Thread(target=run_gui)
-    gui_process.start()
-
-
-def set_values(inputs, outputs):
-    global input_values, output_values
-
-    assert input_values is not None
-    assert output_values is not None
-
-    for i in range(len(input_values)):
-        input_values[i].set(str(inputs[i])[:7])
-
-    for i in range(len(output_values)):
-        output_values[i].set(str(outputs[i])[:7])
-
-
-def close():
-    window.quit()
-    gui_process.join()
+        for i in range(len(self.output_values)):
+            self.output_values[i].set(str(outputs[i])[:7])
