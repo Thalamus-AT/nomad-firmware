@@ -77,7 +77,6 @@ def run_loop():
             vpd.set_all_intensities(intensities)
 
             if output_mode == 3:
-                print('{} | {}'.format(inputs, intensities))
                 gui_class.set_values(inputs, intensities)
         else:
             print("Outlier: {}".format(inputs))
@@ -86,7 +85,6 @@ def run_loop():
         while time.time() < last_time + POLL_TIME:
             time.sleep(0.01)
 
-    print('Exit Request Made')
     vpd.close()
     sd.close()
     io.close()
@@ -130,10 +128,12 @@ def calc_output(inputs):
     last_index = curr_index
     curr_index = (curr_index + 1) % AVG_WINDOW_SIZE
 
+    closeness = [MAX_SENSOR_VAL - i for i in inputs]
+
     # Calculate the weighted average distance for each output.
-    left_avg = get_weighted_average(inputs, left_weights, 2)
-    centre_avg = get_weighted_average(inputs, centre_weights, 2)
-    right_avg = get_weighted_average(inputs, right_weights, 2)
+    left_avg_closeness = get_weighted_average(closeness, left_weights, 1)
+    centre_avg_closeness = get_weighted_average(closeness, centre_weights, 1)
+    right_avg_closeness = get_weighted_average(closeness, right_weights, 1)
 
     # Calculate the change rates for each sensor
     left_change = get_weighted_average(normalised_change, left_weights, 1)
@@ -143,9 +143,9 @@ def calc_output(inputs):
     # print("Change Rates: {} \t {}\t {}".format(left_change, centre_change, right_change))
 
     # Convert the average distances into the intensity value.
-    left_intensity = left_change * ((MAX_SENSOR_VAL - left_avg) / (MAX_SENSOR_VAL / 100))
-    centre_intensity = centre_change * ((MAX_SENSOR_VAL - centre_avg) / (MAX_SENSOR_VAL / 100))
-    right_intensity = right_change * ((MAX_SENSOR_VAL - right_avg) / (MAX_SENSOR_VAL / 100))
+    left_intensity = left_change * (left_avg_closeness / (MAX_SENSOR_VAL / 100))
+    centre_intensity = centre_change * (centre_avg_closeness / (MAX_SENSOR_VAL / 100))
+    right_intensity = right_change * (right_avg_closeness / (MAX_SENSOR_VAL / 100))
 
     # Print the relevant output.
     if output_mode == 2:
@@ -180,8 +180,6 @@ def get_weighted_average(values, weights, output):
 
     if output == 1:
         return max(avgs)
-    elif output == 2:
-        return min(avgs)
     else:
         return sum(avgs) / sum(weights)
 

@@ -70,7 +70,6 @@ class gui:
         self.window.quit()
 
     def set_values(self, inputs, outputs):
-        print('{} | {}'.format(self.input_values, self.output_values))
         assert self.input_values is not None
         assert self.output_values is not None
 
