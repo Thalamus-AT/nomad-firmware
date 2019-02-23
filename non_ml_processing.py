@@ -45,7 +45,7 @@ def main():
             back_process = Thread(target=run_loop)
             back_process.start()
 
-            gui_class = gui.gui(io)
+            gui_class = gui.gui(io, 600, 300)
             gui_class.run_gui()
             return
 
