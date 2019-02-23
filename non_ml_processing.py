@@ -10,11 +10,11 @@ import vibrating_pad_driver as vpd
 
 AVG_WINDOW_SIZE = 10    # Number of previous polls to be averaged when calculating change rate.
 MAX_SENSOR_VAL = 200    # Maximum value that the sensor should produce.
-NUM_OF_SENSORS = 2      # Number of Sensors attached to the Nomad device.
+NUM_OF_SENSORS = 6      # Number of Sensors attached to the Nomad device.
 POLL_TIME = 0.2         # Time between each poll being made by the sensor, in seconds.
 OUTLIER_BUFFER = 500 * POLL_TIME    # Buffer zone around the previous value that is considered non-outlier
 
-output_mode = 0     # 0 = Standard  1 = Silent  2 = Fancy
+output_mode = 0     # 0 = Standard  1 = Silent  2 = Fancy   3 = GUI
 poll_count = 0
 prev_values = [None] * AVG_WINDOW_SIZE  # Array of the most recent polls made. For usage in calculating change rate.
 last_index = -1     # Index of the last poll added
@@ -73,11 +73,12 @@ def run_loop():
 
         # Check if the inputs are an outlier, if they aren't then set the outputs appropriately.
         if not is_outlier(inputs):
-            intensities = calc_output(inputs)
+            results = calc_output(inputs)
+            intensities = results[:3]
             vpd.set_all_intensities(intensities)
 
             if output_mode == 3:
-                gui_class.set_values(inputs, intensities)
+                gui_class.set_values(inputs, intensities, results[3])
         else:
             print("Outlier: {}".format(inputs))
 
@@ -154,7 +155,7 @@ def calc_output(inputs):
     elif output_mode == 0:
         print("Intensities: {} \t{} \t{}".format(left_intensity, centre_intensity, right_intensity))
 
-    return left_intensity, centre_intensity, right_intensity
+    return left_intensity, centre_intensity, right_intensity, normalised_change
 
 
 # Calculates the magnitude of change between the last few values and the current values.
