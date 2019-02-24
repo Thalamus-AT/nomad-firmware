@@ -1,13 +1,21 @@
 import Tkinter as tk
 import tkFont
 
+NUM_OF_SENSORS = 6
+NUM_OF_OUTPUTS = 3
+MAX_SENSOR_VAL = 200.
+
 
 class gui:
     window = None
-    input_values = None
-    output_values = None
-    normalised_change = None
     io_handler = None
+
+    input_values = [None] * NUM_OF_SENSORS
+    input_labels = [None] * NUM_OF_SENSORS
+    output_values = [None] * NUM_OF_OUTPUTS
+    output_labels = [None] * NUM_OF_OUTPUTS
+    normalised_change = [None] * NUM_OF_SENSORS
+    change_labels = [None] * NUM_OF_SENSORS
 
     width = 0
     height = 0
@@ -51,18 +59,16 @@ class gui:
         input_frame.grid_propagate(0)
         output_frame.grid_propagate(0)
 
-        self.input_values = [None] * 6
-        for i in range(len(self.input_values)):
+        for i in range(NUM_OF_SENSORS):
             self.input_values[i] = tk.StringVar()
-            tk.Label(master=input_frame, textvariable=self.input_values[i]) \
-                .grid(row=int(i / 3), column=i % 3, padx=6, pady=2)
+            self.input_labels[i] = tk.Label(master=input_frame, textvariable=self.input_values[i])
+            self.input_labels[i].grid(row=int(i / 3), column=i % 3, padx=6, pady=2)
             self.input_values[i].set('000.000')
 
-        self. output_values = [None] * 3
-        for i in range(len(self.output_values)):
+        for i in range(NUM_OF_OUTPUTS):
             self.output_values[i] = tk.StringVar()
-            tk.Label(master=output_frame, textvariable=self.output_values[i]) \
-                .grid(row=0, column=i, padx=6, pady=2)
+            self.output_labels[i] = tk.Label(master=output_frame, textvariable=self.output_values[i])
+            self.output_labels[i].grid(row=0, column=i, padx=6, pady=2)
             self.output_values[i].set('000.000')
 
         input_frame.grid(row=1)
@@ -82,12 +88,11 @@ class gui:
         change_frame.place(anchor='center')
         change_frame.grid_propagate(0)
 
-        self.normalised_change = [None] * 6
-        for i in range(len(self.normalised_change)):
+        for i in range(NUM_OF_SENSORS):
             self.normalised_change[i] = tk.StringVar()
-            tk.Label(master=change_frame, textvariable=self.normalised_change[i]) \
-                .grid(row=int(i / 3)+1, column=i % 3, padx=6, pady=2)
-            self.normalised_change[i].set('000.000')
+            self.change_labels[i] = tk.Label(master=change_frame, textvariable=self.normalised_change[i])
+            self.change_labels[i].grid(row=int(i / 3)+1, column=i % 3, padx=6, pady=2)
+            self.normalised_change[i].set('0.00000')
 
         change_frame.grid(column=0)
         bottom_frame.grid(row=1, columnspan=2)
@@ -103,10 +108,41 @@ class gui:
         assert self.output_values is not None
 
         for i in range(len(self.input_values)):
-            self.input_values[i].set(str(inputs[i])[:7])
+            self.input_values[i].set(self.format_num_string(inputs[i], 3, 3))
+
+            rgb_code = self.from_rgb((220, 220 - (((MAX_SENSOR_VAL - inputs[i]) / MAX_SENSOR_VAL) * 220), 220))
+            self.input_labels[i].config(bg=rgb_code)
 
         for i in range(len(self.output_values)):
-            self.output_values[i].set(str(outputs[i])[:7])
+            self.output_values[i].set(self.format_num_string(outputs[i], 3, 3))
+
+            rgb_code = self.from_rgb((220, 220 - ((outputs[i] / 100.) * 220), 220))
+            self.output_labels[i].config(bg=rgb_code)
 
         for i in range(len(self.normalised_change)):
-            self.normalised_change[i].set(str(change[i])[:7])
+            self.normalised_change[i].set(self.format_num_string(change[i], 1, 5))
+
+            rgb_code = self.from_rgb((220, 220 - (change[i] * 220), 220))
+            self.change_labels[i].config(bg=rgb_code)
+
+    @staticmethod
+    def from_rgb(rgb):
+        return "#%02x%02x%02x" % rgb
+
+    @staticmethod
+    def format_num_string(num, min_left, right):
+        num_string = str(num)
+        parts = num_string.split('.')
+
+        if len(parts[0]) < min_left:
+            parts[0] = ('0' * (min_left - len(parts[0]))) + parts[0]
+
+        if len(parts[1]) > right:
+            parts[1] = parts[1][:right]
+        elif len(parts[1]) < right:
+            parts[1] = parts[1] + ('0' * (right - len(parts[1])))
+
+        assert len(parts[0]) >= min_left
+        assert len(parts[1]) == right
+
+        return parts[0] + '.' + parts[1]
