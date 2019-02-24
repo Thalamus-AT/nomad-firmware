@@ -14,7 +14,7 @@ class gui:
     input_labels = [None] * NUM_OF_SENSORS
     output_values = [None] * NUM_OF_OUTPUTS
     output_labels = [None] * NUM_OF_OUTPUTS
-    normalised_change = [None] * NUM_OF_SENSORS
+    change_values = [None] * NUM_OF_SENSORS
     change_labels = [None] * NUM_OF_SENSORS
 
     width = 0
@@ -89,10 +89,10 @@ class gui:
         change_frame.grid_propagate(0)
 
         for i in range(NUM_OF_SENSORS):
-            self.normalised_change[i] = tk.StringVar()
-            self.change_labels[i] = tk.Label(master=change_frame, textvariable=self.normalised_change[i])
+            self.change_values[i] = tk.StringVar()
+            self.change_labels[i] = tk.Label(master=change_frame, textvariable=self.change_values[i])
             self.change_labels[i].grid(row=int(i / 3)+1, column=i % 3, padx=6, pady=2)
-            self.normalised_change[i].set('0.00000')
+            self.change_values[i].set('0.00000')
 
         change_frame.grid(column=0)
         bottom_frame.grid(row=1, columnspan=2)
@@ -104,8 +104,12 @@ class gui:
         self.window.quit()
 
     def set_values(self, inputs, outputs, change):
-        assert self.input_values is not None
-        assert self.output_values is not None
+        assert None not in self.input_values
+        assert None not in self.input_labels
+        assert None not in self.output_values
+        assert None not in self.output_labels
+        assert None not in self.change_values
+        assert None not in self.change_labels
 
         for i in range(len(self.input_values)):
             self.input_values[i].set(self.format_num_string(inputs[i], 3, 3))
@@ -119,8 +123,8 @@ class gui:
             rgb_code = self.from_rgb((220, 220 - ((outputs[i] / 100.) * 220), 220))
             self.output_labels[i].config(bg=rgb_code)
 
-        for i in range(len(self.normalised_change)):
-            self.normalised_change[i].set(self.format_num_string(change[i], 1, 5))
+        for i in range(len(self.change_values)):
+            self.change_values[i].set(self.format_num_string(change[i], 1, 5))
 
             rgb_code = self.from_rgb((220, 220 - (change[i] * 220), 220))
             self.change_labels[i].config(bg=rgb_code)
@@ -133,6 +137,9 @@ class gui:
     def format_num_string(num, min_left, right):
         num_string = str(num)
         parts = num_string.split('.')
+
+        if len(parts) < 2:
+            parts.append('')
 
         if len(parts[0]) < min_left:
             parts[0] = ('0' * (min_left - len(parts[0]))) + parts[0]

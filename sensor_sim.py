@@ -1,6 +1,8 @@
 # Test functions used to test the processing without direct sensor input.
 # Reads in test data from a CSV file
 
+import time
+
 TEST_FILE = "2019-21-1--13-50-40.data"
 
 count = 0
@@ -30,6 +32,8 @@ def setup_sensors():
     print("File ({}) contains {} lines".format(TEST_FILE, max_line))
     print
 
+    time.sleep(1)
+
 
 # Reads the next line of data from the file and returns it as a 1x9 array of ints
 # If it has reached the end of the file it will loop around to the start again
@@ -40,5 +44,8 @@ def poll_sensors():
         for i, line in enumerate(f):
             if i == count:
                 count = (count + 1) % max_line
-                return map(float, map(str.strip, line.split(',')))
+                return map(float, map(str.strip, line.split(',')))[:6]
 
+
+def close():
+    return
