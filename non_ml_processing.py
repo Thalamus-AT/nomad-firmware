@@ -30,8 +30,6 @@ right_weights = [0, 0.5, 1.0,
                  0, 0.5, 1.0]
 
 
-# Represents the core loop of the program, getting sensor data, removing outliers, classifying the results,
-# then setting the intensity of the sensors appropriately.
 def main():
     global output_mode, gui_class
 
@@ -52,6 +50,8 @@ def main():
     run_loop()
 
 
+# Represents the core loop of the program, getting sensor data, removing outliers, classifying the results,
+# then setting the intensity of the sensors appropriately.
 def run_loop():
     global poll_count
 
