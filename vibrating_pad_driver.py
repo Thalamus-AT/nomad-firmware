@@ -10,8 +10,8 @@ else:
 intensities = array.array('I', [0, 0, 0])
 running = True
 
-ENABLE_PINS = []
-CLOCKWISE_PIN = []
+ENABLE_PINS = [4, 4, 4]
+CLOCKWISE_PIN = [10, 11, 9]
 pads = [None] * len(ENABLE_PINS)
 
 
@@ -27,7 +27,7 @@ def setup():
         pads[i] = GPIO.PWM(CLOCKWISE_PIN[i], 50)
         pads[i].start(100)
 
-    set_all_intensities([100])
+    # set_all_intensities([100, 0, 0])
 
 
 def set_pad_intensity(pad, intensity):
@@ -43,6 +43,7 @@ def set_all_intensities(values):
     for i in range(len(pads)):
         val = max(min(values[i], 100), 0)
         set_pad_intensity(i, val)
+    return
 
 
 def get_pad_intensity(pad):

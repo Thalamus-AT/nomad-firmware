@@ -9,9 +9,15 @@ else:
 
 TRIG = [23, 25, 16, 21, 17, 6]  # Output pins
 ECHO = [24, 12, 20, 3, 5, 13]  # Input pins
+period = 0.025
 
 
-def setup_sensors():
+def setup_sensors(p):
+    global period
+    assert p >= 0.025
+
+    period = p
+
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
 
@@ -26,9 +32,14 @@ def setup_sensors():
 
 
 def poll_sensors():
+    # results = [200, 200, poll_sensor(2), poll_sensor(3), 200, 200]
     results = []
     for i in range(len(TRIG)):
+        start_time = time.time()
         results.append(poll_sensor(i))
+
+        while time.time() < (start_time + period):
+            time.sleep(0.005)
 
     return results
 

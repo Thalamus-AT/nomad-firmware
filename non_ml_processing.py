@@ -11,7 +11,7 @@ import vibrating_pad_driver as vpd
 AVG_WINDOW_SIZE = 10    # Number of previous polls to be averaged when calculating change rate.
 MAX_SENSOR_VAL = 200    # Maximum value that the sensor should produce.
 NUM_OF_SENSORS = 6      # Number of Sensors attached to the Nomad device.
-POLL_TIME = 0.2         # Time between each poll being made by the sensor, in seconds.
+POLL_TIME = 0.36        # Time between each poll being made by the sensor, in seconds.
 OUTLIER_BUFFER = 500 * POLL_TIME    # Buffer zone around the previous value that is considered non-outlier
 
 output_mode = 0     # 0 = Standard  1 = Silent  2 = Fancy   3 = GUI
@@ -56,7 +56,7 @@ def run_loop():
     global poll_count
 
     io.setup()
-    sd.setup_sensors()
+    sd.setup_sensors(POLL_TIME / NUM_OF_SENSORS)
     vpd.setup()
 
     # Loops until the user exits.
