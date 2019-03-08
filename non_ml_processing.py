@@ -13,6 +13,7 @@ MAX_SENSOR_VAL = 200    # Maximum value that the sensor should produce.
 NUM_OF_SENSORS = 6      # Number of Sensors attached to the Nomad device.
 POLL_TIME = 0.36        # Time between each poll being made by the sensor, in seconds.
 OUTLIER_BUFFER = 500 * POLL_TIME    # Buffer zone around the previous value that is considered non-outlier
+REMINDER_TIME = 60      # Number of seconds between reminding about low battery or faulty sensors
 
 output_mode = 0     # 0 = Standard  1 = Silent  2 = Fancy   3 = GUI
 poll_count = 0
@@ -20,6 +21,7 @@ prev_values = [None] * AVG_WINDOW_SIZE  # Array of the most recent polls made. F
 last_index = -1     # Index of the last poll added
 curr_index = 0      # The index of the oldest poll in the prev_values array
 last_outlier = None
+next_remind_time = 0
 
 # === Weights for a 6 sensor version ===
 left_weights = [1.0, 0.5, 0,
@@ -30,12 +32,12 @@ right_weights = [0, 0.5, 1.0,
                  0, 0.5, 1.0]
 
 # === Array for storing whether a sensor is faulty
-faulty_sensors =   [0, 0, 0,
-                    0, 0, 0]
+faulty_sensors = [False] * NUM_OF_SENSORS
+faulty_sensors[0] = True
 
-faulty_sensor = False
+faulty_sensor = True
 low_battery = False
-REMINDER_RATE = 90
+
 
 def main():
     global output_mode, gui_class
@@ -60,25 +62,28 @@ def main():
 # Represents the core loop of the program, getting sensor data, removing outliers, classifying the results,
 # then setting the intensity of the sensors appropriately.
 def run_loop():
-    global poll_count
+    global poll_count, next_remind_time
 
     io.setup()
     sd.setup_sensors(POLL_TIME / NUM_OF_SENSORS)
     vpd.setup()
 
-    vpd.startup_buzz()
+    vpd.startup_sequence()
     time.sleep(3)
 
     # Loops until the user exits.
     while not io.has_requested_exit():
 
-        if ((poll_count % REMINDER_RATE) == 0):
+        if time.time() >= next_remind_time:
             if faulty_sensor:
                 for i in range(len(faulty_sensors)):
-                    if faulty_sensors[i] == 1:
-                        vpd.faulty_sensor_buzz(i)
+                    if faulty_sensors[i]:
+                        vpd.faulty_sensor_sequence(i)
+
             if low_battery:
-                vpd.low_battery_buzz()
+                vpd.low_battery_sequence()
+
+            next_remind_time = time.time() + REMINDER_TIME
 
         # Store the current time so we know when to poll next.
         last_time = time.time()

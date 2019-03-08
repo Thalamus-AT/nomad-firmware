@@ -3,7 +3,7 @@
 
 import time
 
-TEST_FILE = "data/nomad-reading-3.data"
+TEST_FILE = "data/nomad-reading-2.data"
 
 count = 0
 max_line = 0
@@ -23,7 +23,7 @@ def file_len(fname):
 
 
 # Initialises the test data
-def setup_sensors():
+def setup_sensors(p):
     global count, max_line
 
     count = 0

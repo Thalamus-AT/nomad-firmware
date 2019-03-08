@@ -15,6 +15,11 @@ ENABLE_PINS = [4, 4, 4]
 CLOCKWISE_PIN = [10, 11, 9]
 pads = [None] * len(ENABLE_PINS)
 
+STARTUP_FADEIN_SPEED = 6
+STARTUP_FADEOUT_SPEED = 8
+LOW_BATTERY_PULSES = 2
+FAULTY_BIG_PULSES = 3
+
 
 def setup():
     global pads
@@ -27,8 +32,6 @@ def setup():
 
         pads[i] = GPIO.PWM(CLOCKWISE_PIN[i], 50)
         pads[i].start(100)
-
-    # set_all_intensities([100, 0, 0])
 
 
 def set_pad_intensity(pad, intensity):
@@ -58,100 +61,79 @@ def close():
 
     GPIO.cleanup()
 
-def startup_buzz():
-    startup = 0
-    i = 0;
-    while(startup == 0):
-        if (i >= 100):
-            i = 100
-            startup = 1
-        else:
-            set_pad_intensity(0, i)
-            set_pad_intensity(1, i)
-            set_pad_intensity(2, i)
-            i = i + 6;
+
+def startup_sequence():
+    # part = 0
+    #
+    # i = 0
+    # while part == 0:
+    #     if i >= 100:
+    #         i = 100
+    #         part = 1
+    #     else:
+    #         set_all_intensities([i, i, i])
+    #         i = i + STARTUP_FADE_SPEED
+    #     time.sleep(0.1)
+    #
+    # while part == 1:
+    #     if i <= 0:
+    #         i = 0
+    #         part = 2
+    #     else:
+    #         set_pad_intensity(0, i)
+    #         set_pad_intensity(1, i)
+    #         set_pad_intensity(2, i)
+    #         i = i - 8
+    #     time.sleep(0.1)
+
+    i = 0
+    while i <= 100:
+        set_all_intensities([i, i, i])
+        i += STARTUP_FADEIN_SPEED
         time.sleep(0.1)
 
-    while(startup == 1):
-        if (i <= 0):
-            i = 0
-            startup = 2
-        else:
-            set_pad_intensity(0, i)
-            set_pad_intensity(1, i)
-            set_pad_intensity(2, i)
-            i = i - 8;
+    i = 100
+    while i >= 0:
+        set_all_intensities([i, i, i])
+        i -= STARTUP_FADEOUT_SPEED
         time.sleep(0.1)
 
-def low_battery_buzz():
-    set_pad_intensity(0, 0)
-    set_pad_intensity(1, 0)
-    set_pad_intensity(2, 0)
-    time.sleep(0.4)
-    set_pad_intensity(0, 100)
-    set_pad_intensity(1, 100)
-    set_pad_intensity(2, 100)
-    time.sleep(0.2)
-    set_pad_intensity(0, 0)
-    set_pad_intensity(1, 0)
-    set_pad_intensity(2, 0)
-    time.sleep(0.2)
-    set_pad_intensity(0, 100)
-    set_pad_intensity(1, 100)
-    set_pad_intensity(2, 100)
-    time.sleep(0.2)
-    set_pad_intensity(0, 0)
-    set_pad_intensity(1, 0)
-    set_pad_intensity(2, 0)
-    time.sleep(0.4)
 
-def faulty_sensor_buzz(sensor):
+def low_battery_sequence():
+    set_all_intensities([0, 0, 0])
+    time.sleep(0.4)
+    for i in range(LOW_BATTERY_PULSES):
+        set_all_intensities([100, 100, 100])
+        time.sleep(0.2)
+        set_all_intensities([0, 0, 0])
+        time.sleep(0.2)
+    time.sleep(0.2)
+
+
+def faulty_sensor_sequence(sensor):
     pad = sensor % 3
+    top = False
     if sensor < 3:
-        top = 1
-    else:
-        top = 0
-    set_pad_intensity(0, 0)
-    set_pad_intensity(1, 0)
-    set_pad_intensity(2, 0)
+        top = True
+
+    set_all_intensities([0, 0, 0])
     time.sleep(0.4)
-    set_pad_intensity(0, 100)
-    set_pad_intensity(1, 100)
-    set_pad_intensity(2, 100)
-    time.sleep(0.2)
-    set_pad_intensity(0, 0)
-    set_pad_intensity(1, 0)
-    set_pad_intensity(2, 0)
-    time.sleep(0.2)
-    set_pad_intensity(0, 100)
-    set_pad_intensity(1, 100)
-    set_pad_intensity(2, 100)
-    time.sleep(0.2)
-    set_pad_intensity(0, 0)
-    set_pad_intensity(1, 0)
-    set_pad_intensity(2, 0)
-    time.sleep(0.2)
-    set_pad_intensity(0, 100)
-    set_pad_intensity(1, 100)
-    set_pad_intensity(2, 100)
-    time.sleep(0.2)
-    set_pad_intensity(0, 0)
-    set_pad_intensity(1, 0)
-    set_pad_intensity(2, 0)
-    time.sleep(0.2)
-    set_pad_intensity(pad, 100)
-    time.sleep(0.2)
-    set_pad_intensity(pad, 0)
-    time.sleep(0.2)
-    set_pad_intensity(pad, 100)
-    time.sleep(0.2)
-    set_pad_intensity(pad, 0)
-    time.sleep(0.2)
+    for i in range(FAULTY_BIG_PULSES):
+        set_all_intensities([100, 100, 100])
+        time.sleep(0.2)
+        set_all_intensities([0, 0, 0])
+        time.sleep(0.2)
+
+    for i in range(2):
+        set_pad_intensity(pad, 100)
+        time.sleep(0.2)
+        set_pad_intensity(pad, 0)
+        time.sleep(0.2)
+
     if top:
         set_pad_intensity(pad, 100)
         time.sleep(0.2)
         set_pad_intensity(pad, 0)
-    set_pad_intensity(0, 0)
-    set_pad_intensity(1, 0)
-    set_pad_intensity(2, 0)
+
+    set_all_intensities([0, 0, 0])
     time.sleep(0.4)
