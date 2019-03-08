@@ -1,13 +1,21 @@
-# from pynput import keyboard as kb
+import os
+
+# Check the system we are running on, if it is 64 bit we can presume it isn't the Pi
+if os.uname()[4] == 'x86_64':
+    import GPIO_Sim as GPIO
+else:
+    import RPi.GPIO as GPIO
+
+SLEEP_PIN = 26
 
 requested_exit = False
-listener = None
+mute = False
+prev_mute_val = 1
 
 
 def setup():
-    global listener
-    # listener = kb.Listener(on_release=release_handler)
-    # listener.start()
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(SLEEP_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 
 # Called when the user wants to exit
@@ -21,13 +29,20 @@ def has_requested_exit():
     return requested_exit
 
 
-def release_handler(key):
-    print('Key Pressed ({})'.format(key))
-    # if key == kb.Key.esc:
-    #     request_exit()
+def has_requested_mute():
+    global mute, prev_mute_val
+
+    if not GPIO.input(SLEEP_PIN):
+        if prev_mute_val != 0:
+            print('Sleep Button Pressed')
+            mute = not mute
+
+        prev_mute_val = 0
+    else:
+        prev_mute_val = 1
+
+    return mute
 
 
 def close():
-    global listener
-    # if listener is not None:
-    #     listener.stop()
+    GPIO.cleanup()

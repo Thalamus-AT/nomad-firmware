@@ -19,7 +19,7 @@ def setup_sensors(p):
     period = p
 
     GPIO.setwarnings(False)
-    GPIO.setmode(GPIO.BCM)
+    # GPIO.setmode(GPIO.BOARD)
 
     for t in TRIG:
         GPIO.setup(t, GPIO.OUT)

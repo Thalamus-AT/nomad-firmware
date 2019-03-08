@@ -33,11 +33,10 @@ right_weights = [0, 0.5, 1.0,
 
 # === Array for storing whether a sensor is faulty
 faulty_sensors = [False] * NUM_OF_SENSORS
-faulty_sensors[0] = True
 
-faulty_sensor = True
+faulty_sensor = False
 low_battery = False
-
+mute = False
 
 def main():
     global output_mode, gui_class
@@ -62,7 +61,7 @@ def main():
 # Represents the core loop of the program, getting sensor data, removing outliers, classifying the results,
 # then setting the intensity of the sensors appropriately.
 def run_loop():
-    global poll_count, next_remind_time
+    global poll_count, next_remind_time, mute
 
     io.setup()
     sd.setup_sensors(POLL_TIME / NUM_OF_SENSORS)
@@ -73,6 +72,9 @@ def run_loop():
 
     # Loops until the user exits.
     while not io.has_requested_exit():
+        mute = io.has_requested_mute()
+        if mute:
+            vpd.set_all_intensities([0, 0, 0])
 
         if time.time() >= next_remind_time:
             if faulty_sensor:
@@ -99,7 +101,9 @@ def run_loop():
         if not is_outlier(inputs):
             results = calc_output(inputs)
             intensities = results[:3]
-            vpd.set_all_intensities(intensities)
+
+            if not mute:
+                vpd.set_all_intensities(intensities)
 
             if output_mode == 3:
                 gui_class.set_values(inputs, intensities, results[3])
