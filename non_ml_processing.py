@@ -29,6 +29,13 @@ centre_weights = [0.5, 1.0, 0.5,
 right_weights = [0, 0.5, 1.0,
                  0, 0.5, 1.0]
 
+# === Array for storing whether a sensor is faulty
+faulty_sensors =   [0, 0, 0,
+                    0, 0, 0]
+
+faulty_sensor = False
+low_battery = False
+REMINDER_RATE = 90
 
 def main():
     global output_mode, gui_class
@@ -59,8 +66,20 @@ def run_loop():
     sd.setup_sensors(POLL_TIME / NUM_OF_SENSORS)
     vpd.setup()
 
+    vpd.startup_buzz()
+    time.sleep(3)
+
     # Loops until the user exits.
     while not io.has_requested_exit():
+
+        if ((poll_count % REMINDER_RATE) == 0):
+            if faulty_sensor:
+                for i in range(len(faulty_sensors)):
+                    if faulty_sensors[i] == 1:
+                        vpd.faulty_sensor_buzz(i)
+            if low_battery:
+                vpd.low_battery_buzz()
+
         # Store the current time so we know when to poll next.
         last_time = time.time()
 

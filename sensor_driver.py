@@ -8,7 +8,7 @@ else:
     import RPi.GPIO as GPIO
 
 TRIG = [23, 25, 16, 21, 17, 6]  # Output pins
-ECHO = [24, 12, 20, 3, 5, 13]  # Input pins
+ECHO = [24, 12, 20, 2, 5, 13]  # Input pins
 period = 0.025
 
 
