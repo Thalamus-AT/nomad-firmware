@@ -3,7 +3,7 @@ import tkFont
 
 NUM_OF_SENSORS = 6
 NUM_OF_OUTPUTS = 3
-MAX_SENSOR_VAL = 200.
+MAX_SENSOR_VAL = 250.
 
 
 class gui:

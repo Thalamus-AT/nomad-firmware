@@ -14,6 +14,7 @@ prev_mute_val = 1
 
 
 def setup():
+    GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(SLEEP_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 

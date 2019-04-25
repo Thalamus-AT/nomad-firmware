@@ -3,7 +3,7 @@
 
 import time
 
-TEST_FILE = "data/nomad-reading-2.data"
+TEST_FILE = "data/nomad-reading-4.data"
 
 count = 0
 max_line = 0

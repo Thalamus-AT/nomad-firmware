@@ -63,29 +63,6 @@ def close():
 
 
 def startup_sequence():
-    # part = 0
-    #
-    # i = 0
-    # while part == 0:
-    #     if i >= 100:
-    #         i = 100
-    #         part = 1
-    #     else:
-    #         set_all_intensities([i, i, i])
-    #         i = i + STARTUP_FADE_SPEED
-    #     time.sleep(0.1)
-    #
-    # while part == 1:
-    #     if i <= 0:
-    #         i = 0
-    #         part = 2
-    #     else:
-    #         set_pad_intensity(0, i)
-    #         set_pad_intensity(1, i)
-    #         set_pad_intensity(2, i)
-    #         i = i - 8
-    #     time.sleep(0.1)
-
     i = 0
     while i <= 100:
         set_all_intensities([i, i, i])

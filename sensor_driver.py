@@ -7,19 +7,16 @@ if os.uname()[4] == 'x86_64':
 else:
     import RPi.GPIO as GPIO
 
-TRIG = [23, 25, 16, 21, 17, 6]  # Output pins
-ECHO = [24, 12, 20, 2, 5, 13]  # Input pins
+TRIG = [23, 25, 16, 21, 17,  6]  # Output pins
+ECHO = [24, 12, 20,  2,  5, 13]  # Input pins
 period = 0.025
 
 
 def setup_sensors(p):
     global period
-    assert p >= 0.025
+    assert p >= period
 
     period = p
-
-    GPIO.setwarnings(False)
-    # GPIO.setmode(GPIO.BOARD)
 
     for t in TRIG:
         GPIO.setup(t, GPIO.OUT)
@@ -28,11 +25,11 @@ def setup_sensors(p):
 
     # Set output pin low then allow time to settle
     GPIO.output(TRIG, False)
-    time.sleep(3)
+    time.sleep(2)
 
 
 def poll_sensors():
-    # results = [200, 200, poll_sensor(2), poll_sensor(3), 200, 200]
+    # results = [200, 200, 200, poll_sensor(3), 200, 200]
     results = []
     for i in range(len(TRIG)):
         start_time = time.time()

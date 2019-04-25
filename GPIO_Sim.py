@@ -5,6 +5,7 @@ import PWM_Sim
 BCM = 0
 OUT = 1
 IN = 2
+PUD_UP = 3
 
 TRIG = None
 ping_time = 0
@@ -18,7 +19,7 @@ def setmode(mode):
     return
 
 
-def setup(pin, mode):
+def setup(pin, mode, pull_up_down=None):
     return
 
 
