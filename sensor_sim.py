@@ -1,12 +1,16 @@
-# Test functions used to test the processing without direct sensor input.
-# Reads in test data from a CSV file
-
 import time
 
-TEST_FILE = "data/nomad-reading-4.data"
+# ==============================================================
+# This file is exclusively used to simulate the sensor_driver
+# file when it is actually connected to the sensors. This is
+# done so the program can be tested on a device which isn't the
+# Raspberry Pi.
+# ==============================================================
 
-count = 0
-max_line = 0
+TEST_FILE = "data/nomad-reading-4.data"     # The name of the file we will be reading from.
+
+count = 0       # The current line of the file we are reading from.
+max_line = 0    # The number of lines in the file.
 
 
 # Returns the length of a file

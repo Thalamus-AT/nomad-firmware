@@ -115,14 +115,14 @@ def classify_inputs(inputs):
 def output_by_class(class_num, distance):
     if class_num == 0:
         # print "Obstacle on the LEFT"
-        vpd.set_pad_intensity(0, (1 - (distance / MAX_SENSOR_DISTANCE)) * 100)
+        vpd.set_motor_intensity(0, (1 - (distance / MAX_SENSOR_DISTANCE)) * 100)
     elif class_num == 1:
         # print "Obstacle in FRONT"
-        vpd.set_pad_intensity(0, (1 - (distance / MAX_SENSOR_DISTANCE)) * 100)
-        vpd.set_pad_intensity(1, (1 - (distance / MAX_SENSOR_DISTANCE)) * 100)
+        vpd.set_motor_intensity(0, (1 - (distance / MAX_SENSOR_DISTANCE)) * 100)
+        vpd.set_motor_intensity(1, (1 - (distance / MAX_SENSOR_DISTANCE)) * 100)
     elif class_num == 2:
         # print "Obstacle on the RIGHT"
-        vpd.set_pad_intensity(1, (1 - (distance / MAX_SENSOR_DISTANCE)) * 100)
+        vpd.set_motor_intensity(1, (1 - (distance / MAX_SENSOR_DISTANCE)) * 100)
 
 
 main()

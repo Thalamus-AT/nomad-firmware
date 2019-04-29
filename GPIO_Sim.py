@@ -2,6 +2,11 @@ import random
 
 import PWM_Sim
 
+# ==============================================================
+# This file is exclusively used to simulate the RPi.GPIO module,
+# so the program can be run on a non-raspberry-pi device.
+# ==============================================================
+
 BCM = 0
 OUT = 1
 IN = 2
